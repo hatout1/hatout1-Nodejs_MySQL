@@ -1,5 +1,6 @@
-const mysql = require("mysql")
-const inquirer = require("inquirer")
+const mysql = require("mysql");
+const inquirer = require("inquirer");
+const chalk = require("chalk");
 
 const connection = mysql.createConnection({
     host: "localhost",
@@ -36,7 +37,7 @@ let askForProductId = () => {
     inquirer
         .prompt({
             type: "input",
-            message: "Welcome again! Please enter the product's id number",
+            message: "Please enter the product's id number\n",
             name: "input"
         }).then(res => {
             pickedItem = res.input
@@ -49,7 +50,7 @@ let askForQuantity = () => {
     inquirer
         .prompt({
             type: "input2",
-            message: "Good pick! How many item you would like?",
+            message: chalk.yellow("Good pick! How many item you would like?\n"),
             name: "input2"
         }).then(res => {
             quantityPicked = res.input2
@@ -68,7 +69,7 @@ CheckIfAvailable = products => {
             availableSelectedQuantity = res[0].stock_quantity;
             fulfillIfAvailable()
         } else {
-            console.log(" Insufficient quantity!")
+            console.log(chalk.red("\nInsufficient quantity!\n"));
             askForService()
         }
     })
@@ -77,7 +78,7 @@ CheckIfAvailable = products => {
 fulfillIfAvailable = fulfill => {
     connection.query(`UPDATE ${table} SET stock_quantity = (${availableSelectedQuantity}- ${quantityPicked}) WHERE item_id = ${pickedItem}`, fulfill, (err, res) => {
         if (err) throw err;
-        console.table("Your Total would be: " + quantityPicked + " * $" + itemSelectedPrice + " = $" + quantityPicked * itemSelectedPrice)
+        console.table(chalk.blue("\nYour Total would be: \n \n") + chalk.yellow(quantityPicked + " * $" + itemSelectedPrice + " = $" + (quantityPicked * itemSelectedPrice).toFixed(2)) + "\n");
         askForService();
     })
 }
@@ -86,12 +87,12 @@ const askForService = () => {
     inquirer
         .prompt({
             type: "list",
-            message: "Let's look for another item",
+            message: "Let's look for another item\n",
             choices: ["Go for it!", "NO thank you, just exit"],
             name: "choice"
         }).then(res => {
             if (res.choice === "NO thank you, just exit") {
-                console.table("**** Thank you for using our products, see you soon ****");
+                console.log("\n**** Thank you for shopping with us, see you soon ****");
                 connection.end();
             } else {
                 recall();
