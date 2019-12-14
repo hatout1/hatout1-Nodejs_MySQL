@@ -11,10 +11,12 @@ const connection = mysql.createConnection({
 
 connection.connect(err => {
     if (err) throw err;
-    itemForSale('products');
-    // CheckIfAvailable('products');
-
+    recall();
 })
+
+let recall = () => {
+    itemForSale('products');
+}
 
 itemForSale = obj => {
     connection.query(`SELECT item_id, product_name, price FROM ??`, obj, (err, res) => {
@@ -23,13 +25,14 @@ itemForSale = obj => {
         // console.table(res);
         console.table(res)
         askForProductId();
-
     })
 }
+
 let table = 'products'
 let pickedItem;
 let quantityPicked;
-const askForProductId = () => {
+
+let askForProductId = () => {
     inquirer
         .prompt({
             type: "input",
@@ -42,7 +45,7 @@ const askForProductId = () => {
         })
 }
 
-const askForQuantity = () => {
+let askForQuantity = () => {
     inquirer
         .prompt({
             type: "input2",
@@ -50,22 +53,48 @@ const askForQuantity = () => {
             name: "input2"
         }).then(res => {
             quantityPicked = res.input2
-            console.table("Your Total would be: $" + quantityPicked * pickedItem);
             CheckIfAvailable();
         })
 }
 
-
+let availableSelectedQuantity;
+let itemSelectedPrice;
 
 CheckIfAvailable = products => {
-    connection.query(`SELECT * FROM ${table} WHERE item_id = ${pickedItem}`, products, (err, res) => {
+    connection.query(`SELECT stock_quantity, price FROM ${table} WHERE item_id = ${pickedItem}`, products, (err, res) => {
         if (err) throw err;
-
-        // console.table(res);
-        console.table(res)
-        // askForProductId();
-        // connection.end()
-
+        if (quantityPicked <= res[0].stock_quantity) {
+            itemSelectedPrice = res[0].price;
+            availableSelectedQuantity = res[0].stock_quantity;
+            fulfillIfAvailable()
+        } else {
+            console.log(" Insufficient quantity!")
+            askForService()
+        }
     })
 }
 
+fulfillIfAvailable = fulfill => {
+    connection.query(`UPDATE ${table} SET stock_quantity = (${availableSelectedQuantity}- ${quantityPicked}) WHERE item_id = ${pickedItem}`, fulfill, (err, res) => {
+        if (err) throw err;
+        console.table("Your Total would be: " + quantityPicked + " * $" + itemSelectedPrice + " = $" + quantityPicked * itemSelectedPrice)
+        askForService();
+    })
+}
+
+const askForService = () => {
+    inquirer
+        .prompt({
+            type: "list",
+            message: "Let's look for another item",
+            choices: ["Go for it!", "NO thank you, just exit"],
+            name: "choice"
+        }).then(res => {
+            if (res.choice === "NO thank you, just exit") {
+                console.table("**** Thank you for using our products, see you soon ****");
+                connection.end();
+            } else {
+                recall();
+            }
+        })
+}
