@@ -12,7 +12,7 @@ const connection = mysql.createConnection({
 
 connection.connect(err => {
     if (err) throw err;
-    recall();
+    askForReason();
 })
 
 let recall = () => {
@@ -29,7 +29,7 @@ itemForSale = obj => {
     })
 }
 
-let table = 'products'
+let table = 'products';
 let pickedItem;
 let quantityPicked;
 
@@ -96,6 +96,24 @@ const askForService = () => {
                 connection.end();
             } else {
                 recall();
+            }
+        })
+}
+
+const askForReason = () => {
+    inquirer
+        .prompt({
+            type: "list",
+            message: "Hello !!!!!!!!!!!!!!!",
+            choices: ["I'm a customer", "I'm a manager", "I'm a supervisor"],
+            name: "choice"
+        }).then(res => {
+            if (res.choice === "I'm a customer") {
+                console.log(chalk.yellow("\n **** Hello! Welcome to our store ****"))
+                recall();
+            } else {
+                console.log("   Hello! \n   Sorry! we are still working on your app");
+                askForReason();
             }
         })
 }
